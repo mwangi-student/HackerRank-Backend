@@ -15,7 +15,7 @@ class Student(db.Model):
     cohort = db.Column(db.String(255))
     tm_id = db.Column(db.BigInteger, db.ForeignKey('tm.id'), nullable= False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable = True)
-
+# relationship
     tm_id = db.relationship("TM", backref="students", cascade="all, delete", lazy=True)
 
 class TM(db.Model):
