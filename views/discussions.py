@@ -4,7 +4,7 @@ from models import db, Discussion
 # Blueprint setup
 discussion_bp = Blueprint('discussion', __name__)
 
-# Create Discussion
+# ==========================================================Create Discussion
 @discussion_bp.route('/discussion', methods=['POST'])
 def create_discussion():
     data = request.get_json()
@@ -19,7 +19,7 @@ def create_discussion():
     db.session.commit()
     return jsonify({'message': 'Discussion created successfully'}), 201
 
-# Read All Discussions
+# =================================================================Read All Discussions
 @discussion_bp.route('/discussion', methods=['GET'])
 def get_all_discussions():
     discussions = Discussion.query.all()
@@ -36,7 +36,7 @@ def get_all_discussions():
         })
     return jsonify(result), 200
 
-# Read Single Discussion
+# ========================================================================Read Single Discussion
 @discussion_bp.route('/discussion/<int:discussion_id>', methods=['GET'])
 def get_discussion(discussion_id):
     discussion = Discussion.query.get_or_404(discussion_id)
@@ -50,8 +50,8 @@ def get_discussion(discussion_id):
         'posted_at': discussion.posted_at
     }), 200
 
-# Update Discussion
-@discussion_bp.route('/discussion/<int:discussion_id>', methods=['PUT'])
+# ============================================================================Update Discussion
+@discussion_bp.route('/discussion/<int:discussion_id>', methods=['PATCH'])
 def update_discussion(discussion_id):
     discussion = Discussion.query.get_or_404(discussion_id)
     data = request.get_json()
@@ -63,7 +63,7 @@ def update_discussion(discussion_id):
     db.session.commit()
     return jsonify({'message': 'Discussion updated successfully'}), 200
 
-# Delete Discussion
+# ==============================================================================Delete Discussion
 @discussion_bp.route('/discussion/<int:discussion_id>', methods=['DELETE'])
 def delete_discussion(discussion_id):
     discussion = Discussion.query.get_or_404(discussion_id)

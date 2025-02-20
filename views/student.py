@@ -7,38 +7,6 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 student_bp = Blueprint("student_bp", __name__)
 
-#=================================================getting all users============================
-@student_bp.route("/students", methods=["GET"])
-def fetch_students():
-    students = Student.query.all()
-
-    student_list = []
-    for student in students:
-        student_list.append({
-            'id': student.id,
-            'email': student.email,
-            'username': student.username,
-            'cohort': student.cohort,
-            'created_at': student.created_at
-        })
-
-    return jsonify(student_list)
-
-
-#=================================================getting a single student============================
-@student_bp.route("/students/<int:id>", methods=["GET"])
-def fetch_student(id):
-    student = Student.query.get(id)
-    if student:
-        return jsonify({
-            'id': student.id,
-            'email': student.email,
-            'username': student.username,
-            'cohort': student.cohort,
-            'created_at': student.created_at
-        })
-    return jsonify({"message": "Student not found!"}), 404
-
 #=================================================creating a new student============================
 @student_bp.route("/students", methods=["POST"])
 def create_student():
@@ -72,8 +40,43 @@ def create_student():
         }
     }), 201
 
+#=================================================getting all users============================
+@student_bp.route("/students", methods=["GET"])
+def fetch_students():
+    students = Student.query.all()
+
+    student_list = []
+    for student in students:
+        student_list.append({
+            'id': student.id,
+            'email': student.email,
+            'username': student.username,
+            'cohort': student.cohort,
+            'created_at': student.created_at,
+            'tm_id':student.tm_id
+        })
+
+    return jsonify(student_list)
+
+
+#=================================================getting a single student============================
+@student_bp.route("/students/<int:id>", methods=["GET"])
+def fetch_student(id):
+    student = Student.query.get(id)
+    if student:
+        return jsonify({
+            'id': student.id,
+            'email': student.email,
+            'username': student.username,
+            'cohort': student.cohort,
+            'created_at': student.created_at,
+            'tm_id':student.tm_id
+        })
+    return jsonify({"message": "Student not found!"}), 404
+
+
 #=================================================updating an existing student============================
-@student_bp.route("/students/<int:id>", methods=["PUT"])
+@student_bp.route("/students/<int:id>", methods=["PATCH"])
 def update_student(id):
     student = Student.query.get(id)
     if not student:
@@ -84,6 +87,8 @@ def update_student(id):
     student.email = data.get("email", student.email)
     student.password = generate_password_hash(data.get("password", student.password))
     student.cohort = data.get("cohort", student.cohort)
+    student.tm_id = data.get("tm_id", student.tm_id)
+ 
 
     db.session.commit()
 
@@ -94,7 +99,8 @@ def update_student(id):
             'email': student.email,
             'username': student.username,
             'cohort': student.cohort,
-            'created_at': student.created_at
+            'created_at': student.created_at,
+            'tm_id':student.tm_id
         }
     })
 

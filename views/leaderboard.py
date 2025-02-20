@@ -17,7 +17,7 @@ def create_leaderboard():
     db.session.commit()
     return jsonify({'message': 'Leaderboard entry created successfully'}), 201
 
-# Read All Leaderboard Entries
+#==========================================================================Read All Leaderboard Entries
 @leaderboard_bp.route('/leaderboard', methods=['GET'])
 def get_all_leaderboard():
     entries = Leaderboard.query.all()
@@ -46,8 +46,8 @@ def get_all_leaderboard():
 #         'last_updated': entry.last_updated
 #     }), 200
 
-# Update Leaderboard Entry
-@leaderboard_bp.route('/leaderboard/<int:entry_id>', methods=['PUT'])
+#================================================================================== Update Leaderboard Entry
+@leaderboard_bp.route('/leaderboard/<int:entry_id>', methods=['PATCH'])
 def update_leaderboard(entry_id):
     entry = Leaderboard.query.get_or_404(entry_id)
     data = request.get_json()
@@ -58,7 +58,7 @@ def update_leaderboard(entry_id):
     db.session.commit()
     return jsonify({'message': 'Leaderboard entry updated successfully'}), 200
 
-# Delete Leaderboard Entry
+#================================================================================== Delete Leaderboard Entry
 @leaderboard_bp.route('/leaderboard/<int:entry_id>', methods=['DELETE'])
 def delete_leaderboard(entry_id):
     entry = Leaderboard.query.get_or_404(entry_id)
