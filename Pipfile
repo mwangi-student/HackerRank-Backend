@@ -8,8 +8,9 @@ flask-sqlalchemy = "*"
 flask-migrate = "*"
 flask-jwt-extended = "*"
 flask-mail = "*"
-flask-cors = "*"
 flask = "*"
+psycopg2-binary = "*"
+flask-cors = "*"
 
 [dev-packages]
 
