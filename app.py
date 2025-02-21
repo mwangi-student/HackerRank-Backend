@@ -11,6 +11,9 @@ from views.discussions import discussion_bp
 from views.auth import auth_bp
 from views.assessment_invite import assessment_invite_bp
 from views.assessment import assessment_bp
+from views.questions import questions_bp
+from views.submission import submission_bp
+from views.feedback import feedback_bp
 from flask_cors import CORS
 
 mail = Mail()
@@ -25,8 +28,8 @@ def create_app():
     @app.route("/", methods=["GET"])
     def get_data():
         return jsonify({"message": "Flask is working!"})
-
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://hackerrank_db_user:u9oMAmL4BHqoF8BC2ONxGCEZpozSAXnO@dpg-curu3e2n91rc73dfa3k0-a.oregon-postgres.render.com/hackerrank_db'
+    
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///hackerrank.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     app.config["JWT_SECRET_KEY"] = "htgdfcenkudbgdtevdjugsmkkksjugst"
@@ -52,6 +55,9 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(assessment_invite_bp)
     app.register_blueprint(assessment_bp)
+    app.register_blueprint(questions_bp)
+    app.register_blueprint(submission_bp)
+    app.register_blueprint(feedback_bp)
 
 
 
