@@ -36,8 +36,6 @@ class Assessment(db.Model):
     difficulty = db.Column(db.Text, nullable = False)
     category = db.Column(db.String(255), nullable = False)
     constraints = db.Column(db.Text, nullable = False)
-    sample_input = db.Column(db.Text, nullable = False)
-    sample_output = db.Column(db.Text, nullable = False)
     tm_id = db.Column(db.Integer, db.ForeignKey('tm.id'), nullable= False)
     created_at = db.Column(db.DateTime, default= datetime.utcnow, nullable = False)
 

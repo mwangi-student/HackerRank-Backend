@@ -8,6 +8,8 @@ from views.student import student_bp
 from views.tm import tm_bp
 from views.leaderboard import leaderboard_bp
 from views.discussions import discussion_bp
+from views.assessment_invite import assessment_invite_bp
+from views.assessment import assessment_bp
 from flask_cors import CORS
 
 mail = Mail()
@@ -46,6 +48,8 @@ def create_app():
     app.register_blueprint(tm_bp)
     app.register_blueprint(leaderboard_bp)
     app.register_blueprint(discussion_bp)
+    app.register_blueprint(assessment_invite_bp)
+    app.register_blueprint(assessment_bp)
 
 
 
