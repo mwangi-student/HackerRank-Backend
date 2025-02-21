@@ -2,12 +2,13 @@ from flask import Flask, jsonify
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 from datetime import timedelta
-from models import db
+from models import db, TokenBlocklist
 from flask_mail import Mail
 from views.student import student_bp
 from views.tm import tm_bp
 from views.leaderboard import leaderboard_bp
 from views.discussions import discussion_bp
+from views.auth import auth_bp
 from flask_cors import CORS
 
 mail = Mail()
@@ -23,7 +24,7 @@ def create_app():
     def get_data():
         return jsonify({"message": "Flask is working!"})
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///hackerrank.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://hackerrank_db_user:u9oMAmL4BHqoF8BC2ONxGCEZpozSAXnO@dpg-curu3e2n91rc73dfa3k0-a.oregon-postgres.render.com/hackerrank_db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     app.config["JWT_SECRET_KEY"] = "htgdfcenkudbgdtevdjugsmkkksjugst"
@@ -46,17 +47,21 @@ def create_app():
     app.register_blueprint(tm_bp)
     app.register_blueprint(leaderboard_bp)
     app.register_blueprint(discussion_bp)
+    app.register_blueprint(auth_bp)
 
 
 
-    # @jwt.token_in_blocklist_loader
-    # def check_if_token_revoked(jwt_header, jwt_payload: dict) -> bool:
-    #     jti = jwt_payload["jti"]
-    #     token_exists = db.session.query(TokenBlocklist.id).filter_by(jti=jti).scalar()
-    #     return token_exists is not None
+    @jwt.token_in_blocklist_loader
+    def check_if_token_revoked(jwt_header, jwt_payload: dict) -> bool:
+        jti = jwt_payload["jti"]
+        token_exists = db.session.query(TokenBlocklist.id).filter_by(jti=jti).scalar()
+        return token_exists is not None
 
     return app 
+
 app = create_app()
 
 if __name__ == "__main__":
+    
     app.run(debug=True)
+    
