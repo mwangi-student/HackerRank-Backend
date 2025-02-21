@@ -24,7 +24,7 @@ def create_app():
     def get_data():
         return jsonify({"message": "Flask is working!"})
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///hackerrank.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://hackerrank_db_user:u9oMAmL4BHqoF8BC2ONxGCEZpozSAXnO@dpg-curu3e2n91rc73dfa3k0-a.oregon-postgres.render.com/hackerrank_db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     app.config["JWT_SECRET_KEY"] = "htgdfcenkudbgdtevdjugsmkkksjugst"
@@ -59,8 +59,9 @@ def create_app():
 
     return app 
 
+app = create_app()
 
 if __name__ == "__main__":
-    app = create_app()
+    
     app.run(debug=True)
     
