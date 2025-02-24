@@ -11,22 +11,20 @@ from views.discussions import discussion_bp
 from views.auth import auth_bp
 from views.assessment_invite import assessment_invite_bp
 from views.assessment import assessment_bp
-from flask_cors import CORS
+from flask_cors import CORS 
 
 mail = Mail()
 
 def create_app():
     app = Flask(__name__)
-    if __name__ == "__main__":
-        app.run(debug=True)
 
-    CORS(app, supports_credentials=True, allow_headers=["Authorization", "Content-Type"])
+    CORS(app, supports_credentials=True, origins=["http://localhost:5173"], allow_headers=["Authorization", "Content-Type"])
 
     @app.route("/", methods=["GET"])
     def get_data():
         return jsonify({"message": "Flask is working!"})
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://hackerrank_db_user:u9oMAmL4BHqoF8BC2ONxGCEZpozSAXnO@dpg-curu3e2n91rc73dfa3k0-a.oregon-postgres.render.com/hackerrank_db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///hackerrank.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     app.config["JWT_SECRET_KEY"] = "htgdfcenkudbgdtevdjugsmkkksjugst"
@@ -45,6 +43,15 @@ def create_app():
     jwt = JWTManager(app)
     mail.init_app(app)
 
+
+    CORS(student_bp)
+    CORS(tm_bp)
+    CORS(leaderboard_bp)
+    CORS(discussion_bp)
+    CORS(auth_bp)
+    CORS(assessment_invite_bp)
+    CORS(assessment_bp)
+
     app.register_blueprint(student_bp)
     app.register_blueprint(tm_bp)
     app.register_blueprint(leaderboard_bp)
@@ -52,7 +59,6 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(assessment_invite_bp)
     app.register_blueprint(assessment_bp)
-
 
 
     @jwt.token_in_blocklist_loader
@@ -66,6 +72,4 @@ def create_app():
 app = create_app()
 
 if __name__ == "__main__":
-    
     app.run(debug=True)
-    

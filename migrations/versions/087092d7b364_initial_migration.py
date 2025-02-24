@@ -1,8 +1,8 @@
-"""Initial migration.
+"""initial migration
 
-Revision ID: bece3d22c50a
+Revision ID: 087092d7b364
 Revises: 
-Create Date: 2025-02-20 09:23:52.989609
+Create Date: 2025-02-22 11:32:47.353289
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'bece3d22c50a'
+revision = '087092d7b364'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -28,27 +28,32 @@ def upgrade():
     sa.UniqueConstraint('email'),
     sa.UniqueConstraint('username')
     )
+    op.create_table('token_blocklist',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('jti', sa.String(length=36), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('jti')
+    )
     op.create_table('assessment',
-    sa.Column('id', sa.BigInteger(), autoincrement=True, nullable=False),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('title', sa.String(length=255), nullable=False),
     sa.Column('description', sa.String(length=255), nullable=False),
     sa.Column('difficulty', sa.Text(), nullable=False),
     sa.Column('category', sa.String(length=255), nullable=False),
     sa.Column('constraints', sa.Text(), nullable=False),
-    sa.Column('sample_input', sa.Text(), nullable=False),
-    sa.Column('sample_output', sa.Text(), nullable=False),
-    sa.Column('tm_id', sa.BigInteger(), nullable=False),
+    sa.Column('tm_id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['tm_id'], ['tm.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('students',
-    sa.Column('id', sa.BigInteger(), autoincrement=True, nullable=False),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('username', sa.String(length=80), nullable=False),
     sa.Column('email', sa.String(length=120), nullable=False),
     sa.Column('password', sa.String(length=512), nullable=False),
     sa.Column('cohort', sa.String(length=255), nullable=True),
-    sa.Column('tm_id', sa.BigInteger(), nullable=False),
+    sa.Column('tm_id', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['tm_id'], ['tm.id'], ),
     sa.PrimaryKeyConstraint('id'),
@@ -56,10 +61,10 @@ def upgrade():
     sa.UniqueConstraint('username')
     )
     op.create_table('assessmentinvite',
-    sa.Column('id', sa.BigInteger(), autoincrement=True, nullable=False),
-    sa.Column('assessment_id', sa.BigInteger(), nullable=False),
-    sa.Column('student_id', sa.BigInteger(), nullable=False),
-    sa.Column('invited_by', sa.BigInteger(), nullable=False),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('assessment_id', sa.Integer(), nullable=False),
+    sa.Column('student_id', sa.Integer(), nullable=False),
+    sa.Column('invited_by', sa.Integer(), nullable=False),
     sa.Column('status', sa.String(length=255), nullable=False),
     sa.ForeignKeyConstraint(['assessment_id'], ['assessment.id'], ),
     sa.ForeignKeyConstraint(['invited_by'], ['tm.id'], ),
@@ -67,11 +72,11 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('discussions',
-    sa.Column('id', sa.BigInteger(), autoincrement=True, nullable=False),
-    sa.Column('assessment_id', sa.BigInteger(), nullable=False),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('assessment_id', sa.Integer(), nullable=False),
     sa.Column('user_type', sa.String(length=255), nullable=False),
-    sa.Column('student_id', sa.BigInteger(), nullable=False),
-    sa.Column('tm_id', sa.BigInteger(), nullable=False),
+    sa.Column('student_id', sa.Integer(), nullable=False),
+    sa.Column('tm_id', sa.Integer(), nullable=False),
     sa.Column('comment', sa.Text(), nullable=False),
     sa.Column('posted_at', sa.TIMESTAMP(), nullable=False),
     sa.ForeignKeyConstraint(['assessment_id'], ['assessment.id'], ),
@@ -80,19 +85,19 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('leaderboard',
-    sa.Column('id', sa.BigInteger(), autoincrement=True, nullable=False),
-    sa.Column('student_id', sa.BigInteger(), nullable=False),
-    sa.Column('assessment_id', sa.BigInteger(), nullable=False),
-    sa.Column('total_score', sa.BigInteger(), nullable=False),
-    sa.Column('rank', sa.BigInteger(), nullable=False),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('student_id', sa.Integer(), nullable=False),
+    sa.Column('assessment_id', sa.Integer(), nullable=False),
+    sa.Column('total_score', sa.Integer(), nullable=False),
+    sa.Column('rank', sa.Integer(), nullable=False),
     sa.Column('last_updated', sa.TIMESTAMP(), nullable=False),
     sa.ForeignKeyConstraint(['assessment_id'], ['assessment.id'], ),
     sa.ForeignKeyConstraint(['student_id'], ['students.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('questions',
-    sa.Column('id', sa.BigInteger(), autoincrement=True, nullable=False),
-    sa.Column('assessment_id', sa.BigInteger(), nullable=False),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('assessment_id', sa.Integer(), nullable=False),
     sa.Column('type', sa.String(length=255), nullable=False),
     sa.Column('question_text', sa.Text(), nullable=False),
     sa.Column('options', sa.JSON(), nullable=True),
@@ -101,10 +106,10 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('feedback',
-    sa.Column('id', sa.BigInteger(), autoincrement=True, nullable=False),
-    sa.Column('question_id', sa.BigInteger(), nullable=False),
-    sa.Column('student_id', sa.BigInteger(), nullable=False),
-    sa.Column('tm_id', sa.BigInteger(), nullable=False),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('question_id', sa.Integer(), nullable=False),
+    sa.Column('student_id', sa.Integer(), nullable=False),
+    sa.Column('tm_id', sa.Integer(), nullable=False),
     sa.Column('feedback', sa.Text(), nullable=False),
     sa.Column('created_at', sa.TIMESTAMP(), nullable=False),
     sa.ForeignKeyConstraint(['question_id'], ['questions.id'], ),
@@ -113,13 +118,13 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('submission',
-    sa.Column('id', sa.BigInteger(), autoincrement=True, nullable=False),
-    sa.Column('student_id', sa.BigInteger(), nullable=False),
-    sa.Column('question_id', sa.BigInteger(), nullable=False),
-    sa.Column('assessment_id', sa.BigInteger(), nullable=False),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('student_id', sa.Integer(), nullable=False),
+    sa.Column('question_id', sa.Integer(), nullable=False),
+    sa.Column('assessment_id', sa.Integer(), nullable=False),
     sa.Column('answer', sa.Text(), nullable=False),
     sa.Column('status', sa.String(length=255), nullable=False),
-    sa.Column('score', sa.BigInteger(), nullable=False),
+    sa.Column('score', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.TIMESTAMP(), nullable=False),
     sa.ForeignKeyConstraint(['assessment_id'], ['assessment.id'], ),
     sa.ForeignKeyConstraint(['question_id'], ['questions.id'], ),
@@ -139,5 +144,6 @@ def downgrade():
     op.drop_table('assessmentinvite')
     op.drop_table('students')
     op.drop_table('assessment')
+    op.drop_table('token_blocklist')
     op.drop_table('tm')
     # ### end Alembic commands ###

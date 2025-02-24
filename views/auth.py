@@ -14,23 +14,24 @@ def login():
     data = request.get_json()
     email = data.get("email")
     password = data.get("password")
-    role = data.get("role")  #check who is logong in:  Expecting "student" or "tm"
 
-    if not email or not password or not role:
-        return jsonify({"error": "Email, password, and role are required"}), 400
+    if not email or not password:
+        return jsonify({"error": "Email and password are required"}), 400
 
-    # Determine user type based on role
-    if role.lower() == "student":
-        user = Student.query.filter_by(email=email).first()
-    elif role.lower() == "tm":
+    # Check if user is a Student
+    user = Student.query.filter_by(email=email).first()
+    role = "student" if user else None
+
+    # If not a student, check if user is a TM
+    if not user:
         user = TM.query.filter_by(email=email).first()
-    else:
-        return jsonify({"error": "Invalid role"}), 400
+        role = "tm" if user else None
 
+    # If no user found, return error
     if not user or not check_password_hash(user.password, password):
         return jsonify({"error": "Invalid email or password"}), 401
 
-    # Generate JWT token with user role and ID
+    # Generate JWT token
     access_token = create_access_token(
         identity={"id": user.id, "role": role}, 
         expires_delta=timedelta(hours=24)
@@ -43,7 +44,7 @@ def login():
             "id": user.id,
             "username": user.username,
             "email": user.email,
-            "role": role
+            "role": role  # Now role is determined automatically
         }
     }), 200
 

@@ -4,11 +4,13 @@ from models import db, Student
 from datetime import datetime
 from werkzeug.security import generate_password_hash
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_cors import cross_origin
 
 student_bp = Blueprint("student_bp", __name__)
 
 #=================================================creating a new student============================
 @student_bp.route("/students", methods=["POST"])
+@cross_origin(origin="http://localhost:5173", supports_credentials=True)
 def create_student():
     data = request.get_json()
     username = data.get("username")
