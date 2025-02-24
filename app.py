@@ -11,7 +11,14 @@ from views.discussions import discussion_bp
 from views.auth import auth_bp
 from views.assessment_invite import assessment_invite_bp
 from views.assessment import assessment_bp
+
 from flask_cors import CORS 
+
+from views.questions import questions_bp
+from views.submission import submission_bp
+from views.feedback import feedback_bp
+from flask_cors import CORS
+
 
 mail = Mail()
 
@@ -24,6 +31,7 @@ def create_app():
     def get_data():
         return jsonify({"message": "Flask is working!"})
 
+    
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///hackerrank.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -59,6 +67,9 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(assessment_invite_bp)
     app.register_blueprint(assessment_bp)
+    app.register_blueprint(questions_bp)
+    app.register_blueprint(submission_bp)
+    app.register_blueprint(feedback_bp)
 
 
     @jwt.token_in_blocklist_loader
