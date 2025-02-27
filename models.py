@@ -14,7 +14,7 @@ class Student(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(512), nullable=False) 
     cohort = db.Column(db.String(255))
-    tm_id = db.Column(db.Integer, db.ForeignKey('tm.id'), nullable=False)
+    tm_id = db.Column(db.Integer, db.ForeignKey('tm.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relationship

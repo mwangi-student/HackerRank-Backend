@@ -1,15 +1,20 @@
-from flask import jsonify, request, Blueprint
-from flask_mail import Message
-from models import db, Student
-from datetime import datetime
+from flask import jsonify, request, Blueprint, current_app
+from models import db, Student, TM
 from werkzeug.security import generate_password_hash
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required
+from flask_cors import cross_origin
+from flask_mail import Message
+
+
 
 student_bp = Blueprint("student_bp", __name__)
 
 #=================================================creating a new student============================
 @student_bp.route("/students", methods=["POST"])
+@cross_origin(origin="http://localhost:5173", supports_credentials=True)
 def create_student():
+    mail = current_app.extensions.get("mail")
+
     data = request.get_json()
     username = data.get("username")
     email = data.get("email")
@@ -29,8 +34,53 @@ def create_student():
     db.session.add(new_student)
     db.session.commit()
 
+    
+    # Get TM details
+    tm = TM.query.get(tm_id)
+
+    # Sending Emails
+    try:
+        # Email to Student
+        student_msg = Message('Welcome to the System', recipients=[new_student.email])
+        student_msg.body = f"""
+        Hello {new_student.username},
+
+        Your student account has been successfully created.
+
+        Here are your login details:
+        Email: {new_student.email}
+        Password: {password}
+
+        Please keep your credentials safe.
+
+        Regards,
+        Admin Team
+        """
+        mail.send(student_msg)
+
+        # Email to TM (if found)
+        if tm:
+            tm_msg = Message('New Student Registered', recipients=[tm.email])
+            tm_msg.body = f"""
+            Hello {tm.username},
+
+            A new student has been registered under your supervision.
+
+            Student Details:
+            Username: {new_student.username}
+            Email: {new_student.email}
+            Cohort: {new_student.cohort}
+
+            Regards,
+            Admin Team
+            """
+            mail.send(tm_msg)
+
+    except Exception as e:
+        return jsonify({'message': 'Student created, but email sending failed', 'error': str(e)}), 500
+
     return jsonify({
-        "message": "Student created successfully",
+        "message": "Student created successfully, emails sent",
         "student": {
             'id': new_student.id,
             'email': new_student.email,
@@ -42,6 +92,7 @@ def create_student():
 
 #=================================================getting all users============================
 @student_bp.route("/students", methods=["GET"])
+@jwt_required()
 def fetch_students():
     students = Student.query.all()
 
@@ -61,6 +112,7 @@ def fetch_students():
 
 #=================================================getting a single student============================
 @student_bp.route("/students/<int:id>", methods=["GET"])
+@jwt_required()
 def fetch_student(id):
     student = Student.query.get(id)
     if student:
@@ -77,6 +129,7 @@ def fetch_student(id):
 
 #=================================================updating an existing student============================
 @student_bp.route("/students/<int:id>", methods=["PATCH"])
+@jwt_required()
 def update_student(id):
     student = Student.query.get(id)
     if not student:
