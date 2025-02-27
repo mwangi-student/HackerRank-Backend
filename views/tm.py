@@ -1,13 +1,19 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash
 from models import db, TM
+from flask_mail import Message
+from flask_jwt_extended import jwt_required
+
 
 # Blueprint setup
 tm_bp = Blueprint('tm', __name__)
 
 #===================================================== create TM
 @tm_bp.route('/tm', methods=['POST'])
+@jwt_required()
 def create_tm():
+    from flask_mail import mail
+
     data = request.get_json()
     
     password = data.get('password')  
@@ -24,12 +30,22 @@ def create_tm():
     
     db.session.add(new_tm)
     db.session.commit()
+
+     # Sending Email
+    try:
+        msg = Message('Your TM Account Details', recipients=[new_tm.email])
+        msg.body = f"Hello {new_tm.username},\n\nYour account has been created successfully.\n\nUsername: {new_tm.email}\nPassword: {password}\n\nPlease keep your credentials safe."
+        mail.send(msg)
+    except Exception as e:
+        return jsonify({'message': 'TM created, but email sending failed', 'error': str(e)}), 500
+
+    return jsonify({'message': 'TM created successfully, email sent'}), 201
     
-    return jsonify({'message': 'TM created successfully'}), 201
 
 
 #============================================================ Read all TMs
 @tm_bp.route('/tm', methods=['GET'])
+@jwt_required()
 def get_all_tms():
     tms = TM.query.all()
     result = []
@@ -44,6 +60,7 @@ def get_all_tms():
 
 # =====================================================Read single TM
 @tm_bp.route('/tm/<int:tm_id>', methods=['GET'])
+@jwt_required()
 def get_tm(tm_id):
     tm = TM.query.get_or_404(tm_id)
     return jsonify({
@@ -55,6 +72,7 @@ def get_tm(tm_id):
 
 # ===================================================================Update TM
 @tm_bp.route('/tm/<int:tm_id>', methods=['PATCH'])
+@jwt_required()
 def update_tm(tm_id):
     tm = TM.query.get_or_404(tm_id)
     data = request.get_json()
@@ -66,6 +84,7 @@ def update_tm(tm_id):
 
 #======================================================================= Delete TM
 @tm_bp.route('/tm/<int:tm_id>', methods=['DELETE'])
+@jwt_required()
 def delete_tm(tm_id):
     tm = TM.query.get_or_404(tm_id)
     db.session.delete(tm)
