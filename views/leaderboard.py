@@ -1,10 +1,13 @@
 from flask import Blueprint, request, jsonify
 from models import db, Leaderboard
+from flask_jwt_extended import jwt_required
+
 
 leaderboard_bp = Blueprint('leaderboard', __name__)
 
 # Create Leaderboard Entry
 @leaderboard_bp.route('/leaderboard', methods=['POST'])
+@jwt_required()
 def create_leaderboard():
     data = request.get_json()
     new_entry = Leaderboard(
@@ -19,6 +22,7 @@ def create_leaderboard():
 
 #==========================================================================Read All Leaderboard Entries
 @leaderboard_bp.route('/leaderboard', methods=['GET'])
+@jwt_required()
 def get_all_leaderboard():
     entries = Leaderboard.query.all()
     result = []
@@ -48,6 +52,7 @@ def get_all_leaderboard():
 
 #================================================================================== Update Leaderboard Entry
 @leaderboard_bp.route('/leaderboard/<int:entry_id>', methods=['PATCH'])
+@jwt_required()
 def update_leaderboard(entry_id):
     entry = Leaderboard.query.get_or_404(entry_id)
     data = request.get_json()
@@ -60,6 +65,7 @@ def update_leaderboard(entry_id):
 
 #================================================================================== Delete Leaderboard Entry
 @leaderboard_bp.route('/leaderboard/<int:entry_id>', methods=['DELETE'])
+@jwt_required()
 def delete_leaderboard(entry_id):
     entry = Leaderboard.query.get_or_404(entry_id)
     db.session.delete(entry)

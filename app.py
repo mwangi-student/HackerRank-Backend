@@ -3,7 +3,7 @@ from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 from datetime import timedelta
 from models import db, TokenBlocklist
-from flask_mail import Mail
+from flask_mail import Mail, Message
 from views.student import student_bp
 from views.tm import tm_bp
 from views.leaderboard import leaderboard_bp
@@ -20,10 +20,11 @@ from views.feedback import feedback_bp
 from flask_cors import CORS
 
 
-mail = Mail()
+
 
 def create_app():
     app = Flask(__name__)
+    mail = Mail(app)
 
     CORS(app, supports_credentials=True, origins=["http://localhost:5173"], allow_headers=["Authorization", "Content-Type"])
 

@@ -1,10 +1,13 @@
 from flask import Blueprint, request, jsonify
 from models import db, Questions
+from flask_jwt_extended import jwt_required
+
 
 questions_bp = Blueprint("questions", __name__)
 
 # Get all questions
 @questions_bp.route("/questions", methods=["GET"])
+@jwt_required()
 def get_questions():
     questions = Questions.query.all()
     return jsonify([
@@ -21,6 +24,7 @@ def get_questions():
 
 # Get a specific question by ID
 @questions_bp.route("/questions/<int:id>", methods=["GET"])
+@jwt_required()
 def get_question(id):
     question = Questions.query.get(id)
     if not question:
@@ -36,6 +40,7 @@ def get_question(id):
 
 # Create a new question
 @questions_bp.route("/questions", methods=["POST"])
+@jwt_required()
 def create_question():
     data = request.get_json()
     if not data:
@@ -55,6 +60,7 @@ def create_question():
 
 # Update a question
 @questions_bp.route("/questions/<int:id>", methods=["PATCH"])
+@jwt_required()
 def update_question(id):
     question = Questions.query.get(id)
     if not question:
@@ -72,6 +78,7 @@ def update_question(id):
 
 # Delete a question
 @questions_bp.route("/questions/<int:id>", methods=["DELETE"])
+@jwt_required()
 def delete_question(id):
     question = Questions.query.get(id)
     if not question:
