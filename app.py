@@ -15,7 +15,7 @@ from views.assessment import assessment_bp
 from flask_cors import CORS 
 
 from views.questions import questions_bp
-from views.submission import submission_bp
+from views.AssessmenySubmission import submission_bp
 from views.feedback import feedback_bp
 from flask_cors import CORS
 
