@@ -50,6 +50,35 @@ def login():
         }
     }), 200
 
+# google signin
+@auth_bp.route("/google-login", methods=["POST"])
+def google_login():
+    data = request.get_json()
+    id_token_str = data.get("idToken")
+
+    try:
+        # Verify Google token
+        google_info = id_token.verify_oauth2_token(id_token_str, requests.Request())
+        email = google_info["email"]
+        
+        # Find or create user in database
+        user = Student.query.filter_by(email=email).first() or TM.query.filter_by(email=email).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        # Generate JWT
+        role = "student" if isinstance(user, Student) else "tm"
+        access_token = create_access_token(identity={"id": user.id, "role": role})
+
+        return jsonify({
+            "message": "Google login successful",
+            "access_token": access_token,
+            "user": {"id": user.id, "username": user.username, "email": user.email, "role": role}
+        }), 200
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 401
+
 
 # ============================== GET CURRENT USER ==============================
 @auth_bp.route("/current_user", methods=["GET"])
