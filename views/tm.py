@@ -3,6 +3,8 @@ from werkzeug.security import generate_password_hash
 from models import db, TM
 from flask_mail import Message
 from flask_jwt_extended import jwt_required
+from flask import current_app
+
 
 
 # Blueprint setup
@@ -12,7 +14,7 @@ tm_bp = Blueprint('tm', __name__)
 @tm_bp.route('/tm', methods=['POST'])
 @jwt_required()
 def create_tm():
-    from flask_mail import mail
+
 
     data = request.get_json()
     
@@ -33,6 +35,7 @@ def create_tm():
 
      # Sending Email
     try:
+        mail = current_app.extensions['mail'] 
         msg = Message('Your TM Account Details', recipients=[new_tm.email])
         msg.body = f"Hello {new_tm.username},\n\nYour account has been created successfully.\n\nUsername: {new_tm.email}\nPassword: {password}\n\nPlease keep your credentials safe."
         mail.send(msg)

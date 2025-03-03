@@ -112,14 +112,14 @@ class CodeSubmission(db.Model):
     __tablename__ = "code_submission"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     submission_id = db.Column(db.Integer, db.ForeignKey('assessment_submission.id'), nullable=False)
-    question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False)
+    codechallenge_id = db.Column(db.Integer, db.ForeignKey('code_challenge.id'), nullable=False)
     selected_answer = db.Column(db.String(500), nullable=False)
 
 
 class Feedback(db.Model):
     __tablename__ = "feedback"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False)
+    assessment_id = db.Column(db.Integer, db.ForeignKey('assessment.id'), nullable=False)
     student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
     tm_id = db.Column(db.Integer, db.ForeignKey('tm.id'), nullable=False)
     feedback = db.Column(db.Text, nullable=False)

@@ -84,6 +84,9 @@ def google_login():
 @auth_bp.route("/current_user", methods=["GET"])
 @jwt_required()
 def get_current_user():
+    auth_header = request.headers.get("Authorization")
+    print("Authorization Header:", auth_header)  # Debugging
+
     identity = get_jwt_identity()
     print("Identity:", identity)  # Debugging
 
@@ -109,6 +112,7 @@ def get_current_user():
         "email": user.email,
         "role": role
     }), 200
+
 
 # =================================password reset email
 @auth_bp.route("/request-password-reset", methods=["POST"])
