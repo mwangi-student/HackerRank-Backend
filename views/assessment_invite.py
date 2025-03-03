@@ -1,13 +1,15 @@
 from flask import Blueprint, request, jsonify
 from flask_mail import Message
+from datetime import datetime
 from models import db, AssessmentInvite, Student
-from flask_jwt_extended import jwt_required, get_jwt_identity
-
+from flask_jwt_extended import jwt_required
+from flask_mail import Mail
 
 assessment_invite_bp = Blueprint('assessment_invite_bp', __name__)
+mail = Mail()  # Ensure this is initialized in your Flask app
 
 # Fetch all assessment invites
-@assessment_invite_bp.route('/assessment-invite', methods=['GET'])
+@assessment_invite_bp.route('/assessment-invites', methods=['GET'])
 @jwt_required()
 def get_assessment_invites():
     invites = AssessmentInvite.query.all()
@@ -16,85 +18,69 @@ def get_assessment_invites():
             'id': invite.id,
             'assessment_id': invite.assessment_id,
             'student_id': invite.student_id,
-            'invited_by': invite.invited_by,
-            'status': invite.status
+            'tm_id': invite.tm_id,
+            'status': invite.status,
+            'created_at': invite.created_at.isoformat(),
+            'completed_at': invite.completed_at.isoformat() if invite.completed_at else None
         } for invite in invites
     ]
-    return jsonify(result)
+    return jsonify(result), 200
 
-# Fetch a single assessment invite by ID
-@assessment_invite_bp.route('/assessment-invite/<int:id>', methods=['GET'])
-@jwt_required()
-def get_assessment_invite(id):
-    invite = AssessmentInvite.query.get_or_404(id)
-    result = {
-        'id': invite.id,
-        'assessment_id': invite.assessment_id,
-        'student_id': invite.student_id,
-        'invited_by': invite.invited_by,
-        'status': invite.status
-    }
-    return jsonify(result)
-
-# Create a new assessment invite
-@assessment_invite_bp.route('/assessment-invite', methods=['POST'])
+# Create an assessment invite
+@assessment_invite_bp.route("/assessment-invites", methods=["POST"])
 @jwt_required()
 def create_assessment_invite():
-
-    from flask_mail import mail
-
     data = request.get_json()
-    assessment_id = data.get('assessment_id')
-    invited_by = get_jwt_identity()  # Get TM ID of the logged-in user
 
-    # Fetch all students
-    students = Student.query.all()
+    # Validate required fields
+    required_fields = ["assessment_id", "student_id", "tm_id", "status"]
+    for field in required_fields:
+        if field not in data:
+            return jsonify({"error": f"Missing required field: {field}"}), 400
 
-    if not students:
-        return jsonify({'error': 'No students found'}), 404
+    # Create new assessment invite
+    new_invite = AssessmentInvite(
+        assessment_id=data["assessment_id"],
+        student_id=data["student_id"],
+        tm_id=data["tm_id"],
+        status=data["status"],  # Example: 'pending', 'accepted', 'declined'
+        created_at=datetime.utcnow(),
+        completed_at=None  # Set when assessment is completed
+    )
 
-    # List to track invited students
-    invited_students = []
-
-    for student in students:
-        new_invite = AssessmentInvite(
-            assessment_id=assessment_id,
-            student_id=student.id,
-            invited_by=invited_by,
-            status="Pending"  # Default status
-        )
-        db.session.add(new_invite)
-        invited_students.append(student)
-
+    db.session.add(new_invite)
     db.session.commit()
 
-    # Send emails to all invited students
+    # Fetch student details
+    student = Student.query.get(data["student_id"])
+    if not student:
+        return jsonify({"error": "Student not found"}), 404
+
+    # Send email to invited student
     try:
-        for student in invited_students:
-            msg = Message('Assessment Invitation', recipients=[student.email])
-            msg.body = f"""
-            Hello {student.username},
+        msg = Message('Assessment Invitation', recipients=[student.email])
+        msg.body = f"""
+        Hello {student.username},
 
-            You have been invited to participate in an assessment.
+        You have been invited to participate in an assessment.
 
-            - Assessment ID: {assessment_id}
-            - Status: Pending
-            - Invited By: TM ID {invited_by}
+        - Assessment ID: {data['assessment_id']}
+        - Status: Pending
+        - Invited By: TM ID {data['tm_id']}
 
-            Please check your dashboard for more details.
+        Please check your dashboard for more details.
 
-            Regards,  
-            Admin Team
-            """
-            mail.send(msg)
-
+        Regards,  
+        Admin Team
+        """
+        mail.send(msg)
     except Exception as e:
-        return jsonify({'message': 'Invites created, but email sending failed', 'error': str(e)}), 500
+        return jsonify({'message': 'Invite created, but email sending failed', 'error': str(e)}), 500
 
-    return jsonify({'message': 'Assessment invites sent successfully'}), 201
+    return jsonify({'message': 'Assessment invite sent successfully', 'invite_id': new_invite.id}), 201
 
 # Update an existing assessment invite
-@assessment_invite_bp.route('/assessment-invite/<int:id>', methods=['PATCH'])
+@assessment_invite_bp.route('/assessment-invites/<int:id>', methods=['PATCH'])
 @jwt_required()
 def update_assessment_invite(id):
     data = request.get_json()
@@ -102,17 +88,18 @@ def update_assessment_invite(id):
 
     invite.assessment_id = data.get('assessment_id', invite.assessment_id)
     invite.student_id = data.get('student_id', invite.student_id)
-    invite.invited_by = data.get('invited_by', invite.invited_by)
+    invite.tm_id = data.get('tm_id', invite.tm_id)
     invite.status = data.get('status', invite.status)
+    invite.completed_at = datetime.fromisoformat(data['completed_at']) if 'completed_at' in data else invite.completed_at
 
-    db.session.commit() 
-    return jsonify({'message': 'Assessment invite updated successfully'})
+    db.session.commit()
+    return jsonify({'message': 'Assessment invite updated successfully'}), 200
 
 # Delete an existing assessment invite
-@assessment_invite_bp.route('/assessment-invite/<int:id>', methods=['DELETE'])
+@assessment_invite_bp.route('/assessment-invites/<int:id>', methods=['DELETE'])
 @jwt_required()
 def delete_assessment_invite(id):
     invite = AssessmentInvite.query.get_or_404(id)
-    db.session.delete(invite) 
+    db.session.delete(invite)
     db.session.commit()
-    return jsonify({'message': 'Assessment invite deleted successfully'})
+    return jsonify({'message': 'Assessment invite deleted successfully'}), 200

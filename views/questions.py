@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify
-from models import db, Questions
 from flask_jwt_extended import jwt_required
-
+from models import db, Questions
 
 questions_bp = Blueprint("questions", __name__)
 
@@ -14,28 +13,37 @@ def get_questions():
         {
             "id": question.id,
             "assessment_id": question.assessment_id,
-            "type": question.type,
             "question_text": question.question_text,
-            "options": question.options,
-            "correct_answer": question.correct_answer,
+            "choices": {
+                "A": question.choice_a,
+                "B": question.choice_b,
+                "C": question.choice_c,
+                "D": question.choice_d
+            },
+            "correct_answer": question.correct_answer
         }
         for question in questions
     ])
 
-# Get a specific question by ID
+# Get a single question by ID
 @questions_bp.route("/questions/<int:id>", methods=["GET"])
 @jwt_required()
 def get_question(id):
     question = Questions.query.get(id)
     if not question:
         return jsonify({"error": "Question not found"}), 404
+
     return jsonify({
         "id": question.id,
         "assessment_id": question.assessment_id,
-        "type": question.type,
         "question_text": question.question_text,
-        "options": question.options,
-        "correct_answer": question.correct_answer,
+        "choices": {
+            "A": question.choice_a,
+            "B": question.choice_b,
+            "C": question.choice_c,
+            "D": question.choice_d
+        },
+        "correct_answer": question.correct_answer
     })
 
 # Create a new question
@@ -43,16 +51,22 @@ def get_question(id):
 @jwt_required()
 def create_question():
     data = request.get_json()
-    if not data:
-        return jsonify({"error": "Invalid input"}), 400
-    
+
+    required_fields = ["assessment_id", "question_text", "choice_a", "choice_b", "choice_c", "choice_d", "correct_answer"]
+    for field in required_fields:
+        if field not in data:
+            return jsonify({"error": f"Missing required field: {field}"}), 400
+
     new_question = Questions(
-        assessment_id=data.get("assessment_id"),
-        type=data.get("type"),
-        question_text=data.get("question_text"),
-        options=data.get("options"),
-        correct_answer=data.get("correct_answer"),
+        assessment_id=data["assessment_id"],
+        question_text=data["question_text"],
+        choice_a=data["choice_a"],
+        choice_b=data["choice_b"],
+        choice_c=data["choice_c"],
+        choice_d=data["choice_d"],
+        correct_answer=data["correct_answer"]
     )
+
     db.session.add(new_question)
     db.session.commit()
 
@@ -67,13 +81,17 @@ def update_question(id):
         return jsonify({"error": "Question not found"}), 404
 
     data = request.get_json()
+
     question.assessment_id = data.get("assessment_id", question.assessment_id)
-    question.type = data.get("type", question.type)
     question.question_text = data.get("question_text", question.question_text)
-    question.options = data.get("options", question.options)
+    question.choice_a = data.get("choice_a", question.choice_a)
+    question.choice_b = data.get("choice_b", question.choice_b)
+    question.choice_c = data.get("choice_c", question.choice_c)
+    question.choice_d = data.get("choice_d", question.choice_d)
     question.correct_answer = data.get("correct_answer", question.correct_answer)
 
     db.session.commit()
+
     return jsonify({"message": "Question updated successfully"})
 
 # Delete a question
@@ -86,4 +104,5 @@ def delete_question(id):
 
     db.session.delete(question)
     db.session.commit()
+
     return jsonify({"message": "Question deleted successfully"}), 200
