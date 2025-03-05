@@ -55,32 +55,40 @@ import json
 @assessment_bp.route('/assessment', methods=['POST'])
 @jwt_required()
 def create_assessment():
-    data = request.get_json()
-    tm_identity = get_jwt_identity()  # This is a dictionary
+    try:
+        tm_identity = get_jwt_identity()  
+        if not isinstance(tm_identity, dict) or 'id' not in tm_identity:
+            return jsonify({'error': 'Invalid TM ID format'}), 400
+        print("Decoded JWT identity:", tm_identity)
 
-    if not isinstance(tm_identity, dict) or 'id' not in tm_identity:
-        return jsonify({'error': 'Invalid TM ID format'}), 400
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Missing request data'}), 400
 
-    tm_id = tm_identity['id']  # Extract integer TM ID
+        tm_id = tm_identity['id']  
 
-    new_assessment = Assessment(
-        title=data['title'],
-        description=data['description'],
-        difficulty=data['difficulty'],
-        category=data['category'],
-        assessment_type=data['assessment_type'],
-        publish=data['publish'],
-        invite_students=json.dumps(data['invite_students']),  # Convert list to JSON string
-        constraints=data['constraints'],
-        time_limit=data['time_limit'],
-        tm_id=tm_id,  # Store as an integer
-        created_at=datetime.utcnow()
-    )
+        new_assessment = Assessment(
+            title=data['title'],
+            description=data['description'],
+            difficulty=data['difficulty'],
+            category=data['category'],
+            assessment_type=data['assessment_type'],
+            publish=data['publish'],
+            invite_students=json.dumps(data['invite_students']),
+            constraints=data['constraints'],
+            time_limit=data['time_limit'],
+            tm_id=tm_id,
+            created_at=datetime.utcnow()
+        )
 
-    db.session.add(new_assessment)
-    db.session.commit()
+        db.session.add(new_assessment)
+        db.session.commit()
 
-    return jsonify({'message': 'Assessment created successfully'}), 201
+        return jsonify({'message': 'Assessment created successfully', 'id': new_assessment.id}), 201
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 
 # Update an existing assessment
