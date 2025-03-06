@@ -4,11 +4,13 @@ from models import db, Questions
 
 questions_bp = Blueprint("questions", __name__)
 
-# Get all questions
-@questions_bp.route("/questions", methods=["GET"])
+#fetch all questions according assessment
+@questions_bp.route("/questions/<int:assessment_id>", methods=["GET"])
 @jwt_required()
-def get_questions():
-    questions = Questions.query.all()
+def get_questions(assessment_id):
+    # Fetch questions that belong to the given assessment_id
+    questions = Questions.query.filter_by(assessment_id=assessment_id).all()
+
     return jsonify([
         {
             "id": question.id,
@@ -25,8 +27,9 @@ def get_questions():
         for question in questions
     ])
 
+
 # Get a single question by ID
-@questions_bp.route("/questions/<int:id>", methods=["GET"])
+@questions_bp.route("/question/<int:id>", methods=["GET"])
 @jwt_required()
 def get_question(id):
     question = Questions.query.get(id)
