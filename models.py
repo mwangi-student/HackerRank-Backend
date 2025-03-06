@@ -38,7 +38,6 @@ class Assessment(db.Model):
     category = db.Column(db.String(255), nullable=False)
     assessment_type = db.Column(db.String(500), nullable=False)
     publish = db.Column(db.String(500), nullable=False)
-    invite_students = db.Column(db.String(500), nullable=False)
     constraints = db.Column(db.Text, nullable=False)
     time_limit = db.Column(db.Integer, nullable=False)
     tm_id = db.Column(db.Integer, db.ForeignKey('tm.id'), nullable=False)
@@ -48,6 +47,7 @@ class Assessment(db.Model):
     questions = db.relationship('Questions', backref='assessment', lazy=True)
     code_challenge = db.relationship('CodeChallenge', backref='assessment', uselist=False)
     invites = db.relationship('AssessmentInvite', backref='assessment', lazy=True)
+    scores = db.relationship('Scores', backref='assessment', lazy=True)
 
 
 class Questions(db.Model):
@@ -72,7 +72,10 @@ class CodeChallenge(db.Model):
     output_format = db.Column(db.String(255), nullable=False)
     constraints = db.Column(db.Text, nullable=False)
     sample_input = db.Column(db.String(255), nullable=False)
-    sample_output = db.Column(db.String(255), nullable=False)
+    sample_output_1 = db.Column(db.String(255), nullable=False)
+    sample_output_2 = db.Column(db.String(255), nullable=False)
+    sample_output_3 = db.Column(db.String(255), nullable=False)
+    sample_output_4 = db.Column(db.String(255), nullable=False)
 
 
 class AssessmentInvite(db.Model):
@@ -114,6 +117,16 @@ class CodeSubmission(db.Model):
     submission_id = db.Column(db.Integer, db.ForeignKey('assessment_submission.id'), nullable=False)
     codechallenge_id = db.Column(db.Integer, db.ForeignKey('code_challenge.id'), nullable=False)
     selected_answer = db.Column(db.String(500), nullable=False)
+
+class Scores(db.Model):
+    __tablename__ = "scores"
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
+    assessment_id = db.Column(db.Integer, db.ForeignKey('assessment.id'), nullable=False)
+    score = db.Column(db.Integer, nullable=False)
+
+    student = db.relationship('Student', backref=db.backref('scores', lazy=True))
+
 
 
 class Feedback(db.Model):

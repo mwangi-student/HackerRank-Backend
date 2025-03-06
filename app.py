@@ -18,6 +18,7 @@ from views.assessment import assessment_bp
 from views.questions import questions_bp
 from views.AssessmenySubmission import submission_bp
 from views.feedback import feedback_bp
+from views.scores import score_bp
 
 mail = Mail()
 jwt = JWTManager()
@@ -50,7 +51,7 @@ def create_app():
 
     # Register blueprints
     blueprints = [
-        student_bp, tm_bp, leaderboard_bp, discussion_bp, auth_bp,
+        student_bp, tm_bp, leaderboard_bp, discussion_bp, auth_bp, score_bp,
         assessment_invite_bp, assessment_bp, questions_bp, submission_bp, feedback_bp, code_challenge_bp
     ]
     for bp in blueprints:

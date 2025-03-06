@@ -12,7 +12,7 @@ def create_code_challenge():
 
     required_fields = [
         "assessment_id", "task", "example", "input_format", 
-        "output_format", "constraints", "sample_input", "sample_output"
+        "output_format", "constraints", "sample_input", "sample_output_1", "sample_output_2", "sample_output_3", "sample_output_4"
     ]
     
     for field in required_fields:
@@ -27,13 +27,17 @@ def create_code_challenge():
         output_format=data["output_format"],
         constraints=data["constraints"],
         sample_input=data["sample_input"],
-        sample_output=data["sample_output"]
+        sample_output_1=data["sample_output_1"],
+        sample_output_2=data["sample_output_2"],
+        sample_output_3=data["sample_output_3"],
+        sample_output_4=data["sample_output_4"]
     )
 
     db.session.add(new_challenge)
     db.session.commit()
 
     return jsonify({"message": "Code Challenge created successfully", "id": new_challenge.id}), 201
+
 
 # fetching all code challenges
 @code_challenge_bp.route('/code-challenges', methods=['GET'])
@@ -51,7 +55,10 @@ def get_all_code_challenges():
             "output_format": challenge.output_format,
             "constraints": challenge.constraints,
             "sample_input": challenge.sample_input,
-            "sample_output": challenge.sample_output
+            "sample_output_1": challenge.sample_output,
+            "sample_output_2": challenge.sample_output,
+            "sample_output_3": challenge.sample_output,
+            "sample_output_4": challenge.sample_output
         }
         for challenge in challenges
     ]
@@ -73,7 +80,10 @@ def get_code_challenge(id):
         "output_format": challenge.output_format,
         "constraints": challenge.constraints,
         "sample_input": challenge.sample_input,
-        "sample_output": challenge.sample_output
+        "sample_output_1": challenge.sample_output,
+        "sample_output_2": challenge.sample_output,
+        "sample_output_3": challenge.sample_output,
+        "sample_output_4": challenge.sample_output
     }
     
     return jsonify(result)
@@ -91,7 +101,10 @@ def update_code_challenge(id):
     challenge.output_format = data.get("output_format", challenge.output_format)
     challenge.constraints = data.get("constraints", challenge.constraints)
     challenge.sample_input = data.get("sample_input", challenge.sample_input)
-    challenge.sample_output = data.get("sample_output", challenge.sample_output)
+    challenge.sample_output_1 = data.get("sample_output", challenge.sample_output)
+    challenge.sample_output_2 = data.get("sample_output", challenge.sample_output)
+    challenge.sample_output_3 = data.get("sample_output", challenge.sample_output)
+    challenge.sample_output_4 = data.get("sample_output", challenge.sample_output)
 
     db.session.commit()
 
