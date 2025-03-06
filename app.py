@@ -17,6 +17,8 @@ from views.codeChallenge import code_challenge_bp
 from views.assessment import assessment_bp
 from views.questions import questions_bp
 from views.AssessmenySubmission import submission_bp
+from views.codeSubmission import codesubmission_bp
+from views.mcqSubmission import mcqsubmission_bp
 from views.feedback import feedback_bp
 from views.scores import score_bp
 
@@ -51,7 +53,7 @@ def create_app():
 
     # Register blueprints
     blueprints = [
-        student_bp, tm_bp, leaderboard_bp, discussion_bp, auth_bp, score_bp,
+        student_bp, tm_bp, mcqsubmission_bp, leaderboard_bp, discussion_bp, auth_bp, score_bp, codesubmission_bp,
         assessment_invite_bp, assessment_bp, questions_bp, submission_bp, feedback_bp, code_challenge_bp
     ]
     for bp in blueprints:

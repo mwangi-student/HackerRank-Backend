@@ -1,8 +1,9 @@
 from flask import Blueprint, request, jsonify
+from datetime import datetime
 from models import db, CodeSubmission
 from flask_jwt_extended import jwt_required
 
-codesubmission_bp = Blueprint('mcqsubmission_bp', __name__)
+codesubmission_bp = Blueprint('codesubmission_bp', __name__)
 
 @codesubmission_bp.route("/code-submissions", methods=["GET"])
 @jwt_required()
@@ -26,9 +27,9 @@ def get_code_submission(submission_id):
 def create_code_submission():
     data = request.json
     new_submission = CodeSubmission(
-        submission_id=data["submission_id"],
-        codechallenge_id=data["codechallenge_id"],
-        selected_answer=data["selected_answer"]
+    assessment_submission_id=data["assessment_submission_id"],  # ✅ Correct key
+    codechallenge_id=data["codechallenge_id"],
+    selected_answer=data["selected_answer"]
     )
     db.session.add(new_submission)
     db.session.commit()

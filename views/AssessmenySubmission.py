@@ -1,24 +1,39 @@
-from flask import Blueprint, request, jsonify
-from models import db, AssessmentSubmission, MCQSubmission, CodeSubmission
-from flask_jwt_extended import jwt_required
+from flask import Blueprint, jsonify, request
 from datetime import datetime
+from flask_jwt_extended import jwt_required
+from sqlalchemy import not_
+from sqlalchemy.orm import joinedload  # Correct import
+from models import AssessmentSubmission, Assessment, Student, db, MCQSubmission, CodeSubmission
 
-submission_bp = Blueprint("submission", __name__)
+submission_bp = Blueprint('submission', __name__)
 
-# Get all submissions
 @submission_bp.route("/submission", methods=["GET"])
 @jwt_required()
 def get_submissions():
-    submissions = AssessmentSubmission.query.all()
-    return jsonify([
-        {
+    submissions = (
+        AssessmentSubmission.query
+        .join(Assessment, AssessmentSubmission.assessment_id == Assessment.id)
+        .join(Student, AssessmentSubmission.student_id == Student.id)
+        .filter(AssessmentSubmission.submitted_at.isnot(None))  # Ensure assessment is completed
+        .options(joinedload(AssessmentSubmission.student))  # Load the student relationship
+        .options(joinedload(AssessmentSubmission.assessment))  # Load the assessment relationship
+        .options(joinedload(AssessmentSubmission.mcq_answers))  # Load mcq_answers relationship
+        .all()
+    )
+
+    submissions_list = []
+    for submission in submissions:
+        submission_data = {
             "id": submission.id,
             "student_id": submission.student_id,
+            "student_username": submission.student.username,  # Access student's username
             "assessment_id": submission.assessment_id,
-            "submitted_at": submission.submitted_at,
+            "submitted_at": submission.submitted_at.isoformat() if submission.submitted_at else None,  # Format the submission time
+            "assessment_type": submission.assessment.assessment_type,  # Access assessment_type
+            "assessment_title": submission.assessment.title,  # Access assessment title
             "mcq_answers": [
                 {"question_id": mcq.question_id, "selected_answer": mcq.selected_answer}
-                for mcq in submission.mcq_answers
+                for mcq in submission.mcq_answers  # Access mcq_answers
             ],
             "code_submission": (
                 {
@@ -28,34 +43,9 @@ def get_submissions():
                 if submission.code_submission else None
             )
         }
-        for submission in submissions
-    ])
+        submissions_list.append(submission_data)
 
-# Get a single submission by ID
-@submission_bp.route("/submission/<int:id>", methods=["GET"])
-@jwt_required()
-def get_submission(id):
-    submission = AssessmentSubmission.query.get(id)
-    if not submission:
-        return jsonify({"error": "Submission not found"}), 404
-
-    return jsonify({
-        "id": submission.id,
-        "student_id": submission.student_id,
-        "assessment_id": submission.assessment_id,
-        "submitted_at": submission.submitted_at,
-        "mcq_answers": [
-            {"question_id": mcq.question_id, "selected_answer": mcq.selected_answer}
-            for mcq in submission.mcq_answers
-        ],
-        "code_submission": (
-            {
-                "codechallenge_id": submission.code_submission.codechallenge_id,
-                "selected_answer": submission.code_submission.selected_answer
-            }
-            if submission.code_submission else None
-        )
-    })
+    return jsonify(submissions_list)
 
 # Create a new submission
 @submission_bp.route("/submission", methods=["POST"])

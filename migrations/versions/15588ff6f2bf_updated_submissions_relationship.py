@@ -1,8 +1,8 @@
-""" final migration
+""" updated submissions relationship
 
-Revision ID: 61c0a68773e9
+Revision ID: 15588ff6f2bf
 Revises: 
-Create Date: 2025-03-06 07:55:53.543085
+Create Date: 2025-03-06 20:13:43.311843
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '61c0a68773e9'
+revision = '15588ff6f2bf'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -165,20 +165,19 @@ def upgrade():
     )
     op.create_table('code_submission',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('submission_id', sa.Integer(), nullable=False),
+    sa.Column('assessment_submission_id', sa.Integer(), nullable=False),
     sa.Column('codechallenge_id', sa.Integer(), nullable=False),
     sa.Column('selected_answer', sa.String(length=500), nullable=False),
+    sa.ForeignKeyConstraint(['assessment_submission_id'], ['assessment_submission.id'], ),
     sa.ForeignKeyConstraint(['codechallenge_id'], ['code_challenge.id'], ),
-    sa.ForeignKeyConstraint(['submission_id'], ['assessment_submission.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('mcq_submission',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('submission_id', sa.Integer(), nullable=False),
+    sa.Column('assessment_submission_id', sa.Integer(), nullable=False),
+    sa.Column('selected_answer', sa.String(length=255), nullable=False),
     sa.Column('question_id', sa.Integer(), nullable=False),
-    sa.Column('selected_answer', sa.String(length=1), nullable=False),
-    sa.ForeignKeyConstraint(['question_id'], ['questions.id'], ),
-    sa.ForeignKeyConstraint(['submission_id'], ['assessment_submission.id'], ),
+    sa.ForeignKeyConstraint(['assessment_submission_id'], ['assessment_submission.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###
