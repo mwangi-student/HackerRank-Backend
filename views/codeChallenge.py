@@ -5,36 +5,34 @@ from models import db, CodeChallenge
 code_challenge_bp = Blueprint('code_challenge_bp', __name__)
 
 # create-challenge
-@code_challenge_bp.route('/code-challenges', methods=['POST'])
-@jwt_required()
+
+@code_challenge_bp.route("/code-challenges", methods=["POST"])
 def create_code_challenge():
-    data = request.get_json()
+    try:
+        data = request.get_json()
+        print("Received data:", data)  # Log the received data
 
-    required_fields = [
-        "assessment_id", "task", "example", "input_format", 
-        "output_format", "constraints", "sample_input", "sample_output"
-    ]
+        # Validate required fields
+        required_fields = [
+            "assessment_id", "task", "example", "input_format", "output_format",
+            "constraints", "sample_input_1", "sample_input_2", "sample_input_3",
+            "sample_input_4", "sample_output_1", "sample_output_2", "sample_output_3",
+            "sample_output_4"
+        ]
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"error": f"Missing required field: {field}"}), 400
+
+        # Process the data (e.g., save to database)
+        # Replace this with your actual logic
+        print("Saving code challenge:", data)
+
+        return jsonify({"message": "Code challenge created successfully"}), 201
+    except Exception as e:
+        print("Error creating code challenge:", str(e))  # Log the error
+        return jsonify({"error": "Internal server error"}), 500
     
-    for field in required_fields:
-        if field not in data:
-            return jsonify({"error": f"Missing required field: {field}"}), 400
-
-    new_challenge = CodeChallenge(
-        assessment_id=data["assessment_id"],
-        task=data["task"],
-        example=data["example"],
-        input_format=data["input_format"],
-        output_format=data["output_format"],
-        constraints=data["constraints"],
-        sample_input=data["sample_input"],
-        sample_output=data["sample_output"]
-    )
-
-    db.session.add(new_challenge)
-    db.session.commit()
-
-    return jsonify({"message": "Code Challenge created successfully", "id": new_challenge.id}), 201
-
+    
 # fetching all code challenges
 @code_challenge_bp.route('/code-challenges', methods=['GET'])
 @jwt_required()

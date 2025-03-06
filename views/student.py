@@ -94,20 +94,22 @@ def create_student():
 @student_bp.route("/students", methods=["GET"])
 @jwt_required()
 def fetch_students():
-    students = Student.query.all()
-
-    student_list = []
-    for student in students:
-        student_list.append({
-            'id': student.id,
-            'email': student.email,
-            'username': student.username,
-            'cohort': student.cohort,
-            'created_at': student.created_at,
-            'tm_id':student.tm_id
-        })
-
-    return jsonify(student_list)
+    try:
+        students = Student.query.all()
+        student_list = [
+            {
+                'id': student.id,
+                'email': student.email,
+                'username': student.username,
+                'cohort': student.cohort,
+                'created_at': student.created_at,
+                'tm_id': student.tm_id
+            }
+            for student in students
+        ]
+        return jsonify(student_list)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 #=================================================getting a single student============================

@@ -33,28 +33,53 @@ def create_assessment_invite():
     data = request.get_json()
 
     # Validate required fields
-    required_fields = ["assessment_id", "student_id", "tm_id", "status"]
+    required_fields = ["assessment_id", "student_ids", "tm_id", "status"]
     for field in required_fields:
         if field not in data:
             return jsonify({"error": f"Missing required field: {field}"}), 400
 
-    # Create new assessment invite
-    new_invite = AssessmentInvite(
-        assessment_id=data["assessment_id"],
-        student_id=data["student_id"],
-        tm_id=data["tm_id"],
-        status=data["status"],  # Example: 'pending', 'accepted', 'declined'
-        created_at=datetime.utcnow(),
-        completed_at=None  # Set when assessment is completed
-    )
+    # Create new assessment invites for each student
+    for student_id in data["student_ids"]:
+        new_invite = AssessmentInvite(
+            assessment_id=data["assessment_id"],
+            student_id=student_id,
+            tm_id=data["tm_id"],
+            status=data["status"],  # Example: 'pending', 'accepted', 'declined'
+            created_at=datetime.utcnow(),
+            completed_at=None  # Set when assessment is completed
+        )
 
-    db.session.add(new_invite)
+        db.session.add(new_invite)
+
     db.session.commit()
 
-    # Fetch student details
-    student = Student.query.get(data["student_id"])
-    if not student:
-        return jsonify({"error": "Student not found"}), 404
+    # Fetch student details and send emails
+    for student_id in data["student_ids"]:
+        student = Student.query.get(student_id)
+        if not student:
+            return jsonify({"error": f"Student not found: {student_id}"}), 404
+
+        try:
+            msg = Message('Assessment Invitation', recipients=[student.email])
+            msg.body = f"""
+            Hello {student.username},
+
+            You have been invited to participate in an assessment.
+
+            - Assessment ID: {data['assessment_id']}
+            - Status: Pending
+            - Invited By: TM ID {data['tm_id']}
+
+            Please check your dashboard for more details.
+
+            Regards,  
+            Admin Team
+            """
+            mail.send(msg)
+        except Exception as e:
+            return jsonify({'message': 'Invite created, but email sending failed', 'error': str(e)}), 500
+
+    return jsonify({'message': 'Assessment invites sent successfully'}), 201
 
     # Send email to invited student
     try:
