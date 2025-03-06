@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_mail import Message
 from datetime import datetime
-from models import db, AssessmentInvite, Student
+from models import db, AssessmentInvite, Student, AssessmentSubmission
 from flask_jwt_extended import jwt_required
 from flask_mail import Mail
 
@@ -26,58 +26,106 @@ def get_assessment_invites():
     ]
     return jsonify(result), 200
 
-# Create an assessment invite
+from flask_mail import Message
+
 @assessment_invite_bp.route("/assessment-invites", methods=["POST"])
 @jwt_required()
-def create_assessment_invite():
+def create_assessment_invites():
     data = request.get_json()
 
     # Validate required fields
-    required_fields = ["assessment_id", "student_id", "tm_id", "status"]
+    required_fields = ["assessment_id", "student_ids", "tm_id", "status"]
     for field in required_fields:
         if field not in data:
             return jsonify({"error": f"Missing required field: {field}"}), 400
 
-    # Create new assessment invite
-    new_invite = AssessmentInvite(
-        assessment_id=data["assessment_id"],
-        student_id=data["student_id"],
-        tm_id=data["tm_id"],
-        status=data["status"],  # Example: 'pending', 'accepted', 'declined'
-        created_at=datetime.utcnow(),
-        completed_at=None  # Set when assessment is completed
-    )
+    if not isinstance(data["student_ids"], list):
+        return jsonify({"error": "student_ids must be a list of student IDs"}), 400
 
-    db.session.add(new_invite)
-    db.session.commit()
+    assessment_id = data["assessment_id"]
+    tm_id = data["tm_id"]
+    status = data["status"]
+    student_ids = data["student_ids"]
 
-    # Fetch student details
-    student = Student.query.get(data["student_id"])
-    if not student:
-        return jsonify({"error": "Student not found"}), 404
+    invites_created = []
+    invalid_students = []
+    emails_sent = []
+    new_invites = []
+    skipped_students = []
 
-    # Send email to invited student
-    try:
-        msg = Message('Assessment Invitation', recipients=[student.email])
-        msg.body = f"""
-        Hello {student.username},
+    for student_id in student_ids:
+        # Check if student exists
+        student = Student.query.get(student_id)
+        if not student:
+            invalid_students.append(student_id)
+            continue  # Skip invalid student IDs
 
-        You have been invited to participate in an assessment.
+        # Check if the student has already submitted this assessment
+        submission_exists = AssessmentSubmission.query.filter_by(
+            assessment_id=assessment_id, student_id=student_id
+        ).first()
 
-        - Assessment ID: {data['assessment_id']}
-        - Status: Pending
-        - Invited By: TM ID {data['tm_id']}
+        if submission_exists:
+            skipped_students.append(student.email)  # Track students who already submitted
+            continue  # Skip sending invite & email
 
-        Please check your dashboard for more details.
+        # Create a new assessment invite
+        new_invite = AssessmentInvite(
+            assessment_id=assessment_id,
+            student_id=student_id,
+            tm_id=tm_id,
+            status=status,  
+            created_at=datetime.utcnow(),
+            completed_at=None  
+        )
+        new_invites.append(new_invite)
+        invites_created.append(student.email)
 
-        Regards,  
-        Admin Team
-        """
-        mail.send(msg)
-    except Exception as e:
-        return jsonify({'message': 'Invite created, but email sending failed', 'error': str(e)}), 500
+    # Batch insert for efficiency
+    if new_invites:
+        db.session.bulk_save_objects(new_invites)
+        db.session.commit()
 
-    return jsonify({'message': 'Assessment invite sent successfully', 'invite_id': new_invite.id}), 201
+    # Send email to each invited student (only those who have not submitted before)
+    for student_email in invites_created:
+        student = Student.query.filter_by(email=student_email).first()
+        if student:
+            try:
+                msg = Message('Assessment Invitation', recipients=[student.email])
+                msg.body = f"""
+                Hello {student.username},
+
+                You have been invited to participate in an assessment.
+
+                - Assessment ID: {assessment_id}
+                - Status: Pending
+                - Invited By: TM ID {tm_id}
+
+                Please check your dashboard for more details.
+
+                Regards,  
+                Admin Team
+                """
+                mail.send(msg)
+                emails_sent.append(student.email)
+            except Exception as e:
+                return jsonify({'message': 'Invite created, but email sending failed', 'error': str(e)}), 500
+
+    return jsonify({
+        'message': 'Assessment invites processed successfully',
+        'invited_students': invites_created,
+        'emails_sent': emails_sent,
+        'invalid_students': invalid_students,
+        'skipped_students': skipped_students  # Students who already submitted the assessment
+    }), 201
+
+    return jsonify({
+        'message': 'Assessment invites sent successfully',
+        'invited_students': invites_created,
+        'emails_sent': emails_sent,
+        'invalid_students': invalid_students
+    }), 201
+
 
 # Update an existing assessment invite
 @assessment_invite_bp.route('/assessment-invites/<int:id>', methods=['PATCH'])

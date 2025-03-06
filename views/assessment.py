@@ -19,7 +19,6 @@ def get_assessments():
             'category': assessment.category,
             'assessment_type': assessment.assessment_type,
             'publish': assessment.publish,
-            'invite_students': assessment.invite_students,
             'constraints': assessment.constraints,
             'time_limit': assessment.time_limit,
             'tm_id': assessment.tm_id,
@@ -41,7 +40,6 @@ def get_assessment(id):
         'category': assessment.category,
         'assessment_type': assessment.assessment_type,
         'publish': assessment.publish,
-        'invite_students': assessment.invite_students,
         'constraints': assessment.constraints,
         'time_limit': assessment.time_limit,
         'tm_id': assessment.tm_id,
@@ -74,7 +72,6 @@ def create_assessment():
             category=data['category'],
             assessment_type=data['assessment_type'],
             publish=data['publish'],
-            invite_students=json.dumps(data['invite_students']),
             constraints=data['constraints'],
             time_limit=data['time_limit'],
             tm_id=tm_id,
@@ -104,7 +101,6 @@ def update_assessment(id):
     assessment.category = data.get('category', assessment.category)
     assessment.assessment_type = data.get('assessment_type', assessment.assessment_type)
     assessment.publish = data.get('publish', assessment.publish)
-    assessment.invite_students = data.get('invite_students', assessment.invite_students)
     assessment.constraints = data.get('constraints', assessment.constraints)
     assessment.time_limit = data.get('time_limit', assessment.time_limit)
     
