@@ -46,7 +46,6 @@ def get_question(id):
         "correct_answer": question.correct_answer
     })
 
-# Create a new question
 @questions_bp.route("/questions", methods=["POST"])
 @jwt_required()
 def create_question():

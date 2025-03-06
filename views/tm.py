@@ -79,9 +79,13 @@ def get_tm(tm_id):
 def update_tm(tm_id):
     tm = TM.query.get_or_404(tm_id)
     data = request.get_json()
+    
     tm.username = data.get('username', tm.username)
     tm.email = data.get('email', tm.email)
-    tm.password = data.get('password', tm.password)
+    
+    if 'password' in data:
+        tm.password = generate_password_hash(data['password'])
+    
     db.session.commit()
     return jsonify({'message': 'TM updated successfully'}), 200
 
