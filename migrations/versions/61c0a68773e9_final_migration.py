@@ -1,8 +1,8 @@
-"""final migration
+""" final migration
 
-Revision ID: 8b3608f17171
+Revision ID: 61c0a68773e9
 Revises: 
-Create Date: 2025-03-05 16:31:21.736499
+Create Date: 2025-03-06 07:55:53.543085
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '8b3608f17171'
+revision = '61c0a68773e9'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -95,7 +95,10 @@ def upgrade():
     sa.Column('input_format', sa.String(length=255), nullable=False),
     sa.Column('output_format', sa.String(length=255), nullable=False),
     sa.Column('constraints', sa.Text(), nullable=False),
-    sa.Column('sample_input', sa.String(length=255), nullable=False),
+    sa.Column('sample_input_1', sa.String(length=255), nullable=False),
+    sa.Column('sample_input_2', sa.String(length=255), nullable=False),
+    sa.Column('sample_input_3', sa.String(length=255), nullable=False),
+    sa.Column('sample_input_4', sa.String(length=255), nullable=False),
     sa.Column('sample_output_1', sa.String(length=255), nullable=False),
     sa.Column('sample_output_2', sa.String(length=255), nullable=False),
     sa.Column('sample_output_3', sa.String(length=255), nullable=False),
