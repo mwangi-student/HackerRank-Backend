@@ -102,22 +102,24 @@ class AssessmentSubmission(db.Model):
     assessment_id = db.Column(db.Integer, db.ForeignKey('assessment.id'), nullable=False)
     submitted_at = db.Column(db.TIMESTAMP, default=datetime.utcnow, nullable=False)
 
-    mcq_answers = db.relationship('MCQSubmission', backref='assessment_submission', lazy=True)
-    code_submission = db.relationship('CodeSubmission', backref='assessment_submission', uselist=False)
-
+    # Relationships
+    student = db.relationship('Student', backref='submissions')  # Relationship with Student
+    assessment = db.relationship('Assessment', backref='submissions')  # Relationship with Assessment
+    mcq_answers = db.relationship('MCQSubmission', backref='assessment_submission', lazy=True)  # Relationship with MCQSubmission
+    code_submission = db.relationship('CodeSubmission', backref='assessment_submission', uselist=False)  # Relationship with CodeSubmission
 
 class MCQSubmission(db.Model):
     __tablename__ = "mcq_submission"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    submission_id = db.Column(db.Integer, db.ForeignKey('assessment_submission.id'), nullable=False)
-    question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False)
+    assessment_submission_id = db.Column(db.Integer, db.ForeignKey('assessment_submission.id'), nullable=False)
     selected_answer = db.Column(db.String(1), nullable=False)
-
+    question_id = db.Column(db.Integer, nullable=False)
+    selected_answer = db.Column(db.String(255), nullable=False)
 
 class CodeSubmission(db.Model):
     __tablename__ = "code_submission"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    submission_id = db.Column(db.Integer, db.ForeignKey('assessment_submission.id'), nullable=False)
+    assessment_submission_id = db.Column(db.Integer, db.ForeignKey('assessment_submission.id'), nullable=False)
     codechallenge_id = db.Column(db.Integer, db.ForeignKey('code_challenge.id'), nullable=False)
     selected_answer = db.Column(db.String(500), nullable=False)
 
