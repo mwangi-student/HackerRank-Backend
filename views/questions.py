@@ -4,6 +4,30 @@ from models import db, Questions
 
 questions_bp = Blueprint("questions", __name__)
 
+
+
+@questions_bp.route("/questions", methods=["GET"])
+@jwt_required()
+def get_all_questions():
+    questions = Questions.query.all()
+
+    return jsonify([
+        {
+            "id": question.id,
+            "assessment_id": question.assessment_id,
+            "question_text": question.question_text,
+            "choices": {
+                "A": question.choice_a,
+                "B": question.choice_b,
+                "C": question.choice_c,
+                "D": question.choice_d
+            },
+            "correct_answer": question.correct_answer
+        }
+        for question in questions
+    ])
+
+
 #fetch all questions according assessment
 @questions_bp.route("/questions/<int:assessment_id>", methods=["GET"])
 @jwt_required()
@@ -73,7 +97,6 @@ def create_question():
     db.session.commit()
 
     return jsonify({"message": "Question created successfully", "id": new_question.id}), 201
-
 # Update a question
 @questions_bp.route("/questions/<int:id>", methods=["PATCH"])
 @jwt_required()

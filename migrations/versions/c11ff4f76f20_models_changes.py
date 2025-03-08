@@ -1,8 +1,8 @@
-""" updated submissions relationship
+""" models changes
 
-Revision ID: 15588ff6f2bf
+Revision ID: c11ff4f76f20
 Revises: 
-Create Date: 2025-03-06 20:13:43.311843
+Create Date: 2025-03-07 14:16:53.547109
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '15588ff6f2bf'
+revision = 'c11ff4f76f20'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -82,7 +82,9 @@ def upgrade():
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('student_id', sa.Integer(), nullable=False),
     sa.Column('assessment_id', sa.Integer(), nullable=False),
-    sa.Column('submitted_at', sa.TIMESTAMP(), nullable=False),
+    sa.Column('submitted_at', sa.DateTime(), nullable=False),
+    sa.Column('assessment_type', sa.String(length=50), server_default='default_value', nullable=True),
+    sa.Column('assessment_title', sa.String(length=255), nullable=False),
     sa.ForeignKeyConstraint(['assessment_id'], ['assessment.id'], ),
     sa.ForeignKeyConstraint(['student_id'], ['students.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -175,8 +177,8 @@ def upgrade():
     op.create_table('mcq_submission',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('assessment_submission_id', sa.Integer(), nullable=False),
-    sa.Column('selected_answer', sa.String(length=255), nullable=False),
     sa.Column('question_id', sa.Integer(), nullable=False),
+    sa.Column('selected_answer', sa.String(length=255), nullable=False),
     sa.ForeignKeyConstraint(['assessment_submission_id'], ['assessment_submission.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
