@@ -42,7 +42,6 @@ def create_code_challenge():
 
     return jsonify({"message": "Code Challenge created successfully", "id": new_challenge.id}), 201
 
-
 # fetching all code challenges
 @code_challenge_bp.route('/code-challenges', methods=['GET'])
 @jwt_required()
@@ -58,14 +57,15 @@ def get_all_code_challenges():
             "input_format": challenge.input_format,
             "output_format": challenge.output_format,
             "constraints": challenge.constraints,
-            "sample_input_1": challenge.sample_input,
-            "sample_input_2": challenge.sample_input,
-            "sample_input_3": challenge.sample_input,
-            "sample_input_4": challenge.sample_input,
-            "sample_output_1": challenge.sample_output,
-            "sample_output_2": challenge.sample_output,
-            "sample_output_3": challenge.sample_output,
-            "sample_output_4": challenge.sample_output
+           "sample_input_1": challenge.sample_input_1,
+            "sample_input_2": challenge.sample_input_2,
+            "sample_input_3": challenge.sample_input_3,
+            "sample_input_4": challenge.sample_input_4,
+            "sample_output_1": challenge.sample_output_1,
+            "sample_output_2": challenge.sample_output_2,
+            "sample_output_3": challenge.sample_output_3,
+            "sample_output_4": challenge.sample_output_4
+
         }
         for challenge in challenges
     ]

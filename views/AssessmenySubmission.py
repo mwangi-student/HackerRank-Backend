@@ -3,6 +3,7 @@ from datetime import datetime
 from flask_jwt_extended import jwt_required
 from sqlalchemy import not_
 from sqlalchemy.orm import joinedload  # Correct import
+from collections import OrderedDict
 from models import AssessmentSubmission, Assessment, Student, db, MCQSubmission, CodeSubmission
 
 submission_bp = Blueprint('submission', __name__)
@@ -10,42 +11,68 @@ submission_bp = Blueprint('submission', __name__)
 @submission_bp.route("/submission", methods=["GET"])
 @jwt_required()
 def get_submissions():
-    submissions = (
-        AssessmentSubmission.query
-        .join(Assessment, AssessmentSubmission.assessment_id == Assessment.id)
-        .join(Student, AssessmentSubmission.student_id == Student.id)
-        .filter(AssessmentSubmission.submitted_at.isnot(None))  # Ensure assessment is completed
-        .options(joinedload(AssessmentSubmission.student))  # Load the student relationship
-        .options(joinedload(AssessmentSubmission.assessment))  # Load the assessment relationship
-        .options(joinedload(AssessmentSubmission.mcq_answers))  # Load mcq_answers relationship
-        .all()
-    )
-
-    submissions_list = []
-    for submission in submissions:
-        submission_data = {
-            "id": submission.id,
-            "student_id": submission.student_id,
-            "student_username": submission.student.username,  # Access student's username
-            "assessment_id": submission.assessment_id,
-            "submitted_at": submission.submitted_at.isoformat() if submission.submitted_at else None,  # Format the submission time
-            "assessment_type": submission.assessment.assessment_type,  # Access assessment_type
-            "assessment_title": submission.assessment.title,  # Access assessment title
-            "mcq_answers": [
-                {"question_id": mcq.question_id, "selected_answer": mcq.selected_answer}
-                for mcq in submission.mcq_answers  # Access mcq_answers
-            ],
-            "code_submission": (
-                {
-                    "codechallenge_id": submission.code_submission.codechallenge_id,
-                    "selected_answer": submission.code_submission.selected_answer
-                }
-                if submission.code_submission else None
+    try:
+        # Fetch all submissions without filtering
+        submissions = (
+            db.session.query(
+                AssessmentSubmission,
+                Student.username.label("student_username"),
+                Assessment.assessment_type,
+                Assessment.title.label("assessment_title"),
             )
-        }
-        submissions_list.append(submission_data)
+            .outerjoin(Student, AssessmentSubmission.student_id == Student.id)  # Left join to avoid filtering out missing students
+            .outerjoin(Assessment, AssessmentSubmission.assessment_id == Assessment.id)  # Left join to avoid filtering out missing assessments
+            .options(joinedload(AssessmentSubmission.mcq_submissions))
+            .options(joinedload(AssessmentSubmission.code_submission))
+            .all()
+        )
 
-    return jsonify(submissions_list)
+        print(f"Fetched Submissions: {len(submissions)}")
+
+        submissions_list = []
+        student_dict = OrderedDict()
+
+        for submission, student_username, assessment_type, assessment_title in submissions:
+            submission_data = {
+                "id": submission.id,
+                "student_id": submission.student_id,
+                "student_username": student_username if student_username else "Unknown",  # Handle missing students
+                "assessment_id": submission.assessment_id,
+                "submitted_at": submission.submitted_at.isoformat() if submission.submitted_at else None,
+                "assessment_type": assessment_type if assessment_type else "Unknown",  # Handle missing assessments
+                "assessment_title": assessment_title if assessment_title else "Untitled",
+                "mcq_answers": [
+                    {"question_id": mcq.question_id, "selected_answer": mcq.selected_answer}
+                    for mcq in submission.mcq_submissions
+                ],
+                "code_submission": (
+                    {
+                        "codechallenge_id": submission.code_submission.codechallenge_id,
+                        "selected_answer": submission.code_submission.selected_answer
+                    }
+                    if submission.code_submission else None
+                )
+            }
+            submissions_list.append(submission_data)
+
+            # Store unique students
+            if submission.student_id not in student_dict:
+                student_dict[submission.student_id] = {
+                    "student_id": submission.student_id,
+                    "student_username": student_username if student_username else "Unknown",
+                }
+
+        print(f"Returning {len(submissions_list)} submissions and {len(student_dict)} students.")
+
+        return jsonify({
+            "submissions": submissions_list,
+            "students": list(student_dict.values())
+        })
+
+    except Exception as e:
+        print(f"Error fetching submissions: {e}")
+        return jsonify({"error": "An error occurred while fetching submissions"}), 500
+
 
 # Create a new submission
 @submission_bp.route("/submission", methods=["POST"])
@@ -54,26 +81,31 @@ def create_submission():
     data = request.get_json()
 
     # Validate required fields
-    if not data or "student_id" not in data or "assessment_id" not in data:
-        return jsonify({"error": "Missing required fields: student_id, assessment_id"}), 400
+    required_fields = ["student_id", "assessment_id", "assessment_type", "assessment_title"]
+    missing_fields = [field for field in required_fields if field not in data or not data[field]]
+
+    if missing_fields:
+        return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
 
     # Create new submission record
     new_submission = AssessmentSubmission(
         student_id=data["student_id"],
         assessment_id=data["assessment_id"],
+        assessment_type=data["assessment_type"],
+        assessment_title=data["assessment_title"],
         submitted_at=datetime.utcnow()
     )
     db.session.add(new_submission)
-    db.session.commit()
+    db.session.commit()  # Commit first to get new_submission.id
 
-    # Save MCQ answers if provided
+    # Save MCQ submissions if provided
     if "mcq_answers" in data and isinstance(data["mcq_answers"], list):
         for mcq in data["mcq_answers"]:
             if "question_id" not in mcq or "selected_answer" not in mcq:
                 return jsonify({"error": "Invalid MCQ submission format"}), 400
 
             mcq_submission = MCQSubmission(
-                submission_id=new_submission.id,
+                assessment_submission_id=new_submission.id,
                 question_id=mcq["question_id"],
                 selected_answer=mcq["selected_answer"]
             )
@@ -85,15 +117,19 @@ def create_submission():
             return jsonify({"error": "Invalid Code Submission format"}), 400
 
         code_submission = CodeSubmission(
-            submission_id=new_submission.id,
+            assessment_submission_id=new_submission.id,
             codechallenge_id=data["code_submission"]["codechallenge_id"],
             selected_answer=data["code_submission"]["selected_answer"]
         )
         db.session.add(code_submission)
 
-    db.session.commit()
+    db.session.commit()  # Final commit
 
-    return jsonify({"message": "Submission created successfully", "id": new_submission.id}), 201
+    return jsonify({
+        "message": "Submission created successfully",
+        "submission": new_submission.to_dict()
+    }), 201
+
 
 # Delete a submission
 @submission_bp.route("/submission/<int:id>", methods=["DELETE"])
